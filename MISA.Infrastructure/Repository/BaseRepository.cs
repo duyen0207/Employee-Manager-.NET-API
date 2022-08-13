@@ -70,7 +70,7 @@ namespace MISA.Infrastructure.Repository
         /// </summary>
         /// <param name="id">id của entity</param>
         /// <returns>entity đầu tiên tìm được</returns>
-        public MISAEntity Get(Guid id)
+        public MISAEntity Get(string id)
         {
             using(mySqlConnection = new MySqlConnection(connectionString))
             {

@@ -32,7 +32,7 @@ namespace MISA.Core.Services
         protected override bool Validate(Department department)
         {
             // TÊN PHÒNG BAN----------------------------------------
-            if (!this.NotEmpty(department.DepartmentName, "Tên phòng ban"))
+            if (!this.CheckEmpty(department.DepartmentName, "Tên phòng ban"))
             {
                 // kiểm tra trùng lặp
                 Console.WriteLine("kiểm tra trùng lặp phòng ban: ", _repository.CheckExistence(department.DepartmentName));

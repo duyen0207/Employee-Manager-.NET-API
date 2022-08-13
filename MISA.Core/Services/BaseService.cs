@@ -48,7 +48,7 @@ namespace MISA.Core.Services
         public int InsertService(MISAEntity entity)
         {
             // validate dữ liệu
-            var isValid = Validate(entity);
+            var isValid = this.Validate(entity);
             if (isValid)
             {
                 // thực hiện thêm mới vào database
@@ -71,7 +71,7 @@ namespace MISA.Core.Services
         public int UpdateService(MISAEntity entity)
         {
             // validate dữ liệu
-            var isValid = Validate(entity);
+            var isValid = this.Validate(entity);
             if (isValid)
             {
                 // thực hiện thêm mới vào database
@@ -99,14 +99,12 @@ namespace MISA.Core.Services
         /// Check nếu một thuộc tính nào đó trống
         /// </summary>
         /// <param name="entityProperty"></param>
-        /// <returns></returns>
-        public bool NotEmpty(string entityProperty, string propName)
+        /// <returns>true: empty, false: not empty</returns>
+        public bool CheckEmpty(string entityProperty, string propName)
         {
-            if (!string.IsNullOrEmpty(entityProperty)) return true;
-            else {
-                // ném lỗi
+            if (string.IsNullOrEmpty(entityProperty))
                 throw new MISAValidateException($"{propName} không được để trống");
-            }
+            else return false;
         }
 
         #endregion

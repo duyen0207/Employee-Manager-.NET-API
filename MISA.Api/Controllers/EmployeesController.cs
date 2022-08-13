@@ -6,6 +6,7 @@ using MySqlConnector;
 using MISA.Core.Interfaces.Repository;
 using MISA.Core.Interfaces.Services;
 using MISA.Core.Models;
+using MISA.Core.Exceptions;
 
 namespace MISA.Web05.Controllers
 {
@@ -44,9 +45,9 @@ namespace MISA.Web05.Controllers
                 var employees = _employeeRepository.Get();
                 return Ok(employees);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                throw;
+                return this.HandleException(exception);
             }
         }
 
@@ -56,7 +57,7 @@ namespace MISA.Web05.Controllers
         /// <param name="departmentId"></param>
         /// <returns>nhân viên cụ thể</returns>
         [HttpGet("{employeeId}")]
-        public IActionResult? Get(Guid employeeId)
+        public IActionResult? Get(string employeeId)
         {
             try
             {
@@ -64,9 +65,9 @@ namespace MISA.Web05.Controllers
                 // Trả dữ liệu cho client
                 return Ok(employee);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                throw;
+                return this.HandleException(exception);
             }
         }
 
@@ -77,8 +78,15 @@ namespace MISA.Web05.Controllers
         [HttpGet("NewEmployeeCode")]
         public IActionResult? GetNewCode()
         {
-
-            return Ok(0);
+            try
+            {
+                string newCode = _employeeService.GetNewCode();
+                return Ok(newCode);
+            }
+            catch (Exception exception)
+            {
+                return this.HandleException(exception);
+            }
         }
 
         /// <summary>
@@ -92,9 +100,9 @@ namespace MISA.Web05.Controllers
                 var res = _employeeService.InsertService(employee);
                 return StatusCode(201, res);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                throw;
+                return this.HandleException(exception);
             }
         }
 
@@ -111,9 +119,9 @@ namespace MISA.Web05.Controllers
                 var res = _employeeService.UpdateService(updateEmployee);
                 return Ok(res);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                throw;
+                return this.HandleException(exception);
             }
         }
 
@@ -128,13 +136,46 @@ namespace MISA.Web05.Controllers
                 var res = _employeeRepository.Delete(employeeId);
                 return Ok(res);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-
-                throw;
-            }
+                return this.HandleException(exception);
+            }   
         }
 
-        
+        /// <summary>
+        /// Xử lý lỗi 
+        /// </summary>
+        /// <param name="exception"></param>
+        /// <returns></returns>
+        private IActionResult HandleException(Exception exception)
+        {
+            // ghi log vào hệ thống
+            //...
+
+            // thông báo lỗi
+            string userMsg = null;
+            int statusCode = 200;
+
+            if (exception is MISAValidateException)
+            {
+                statusCode = 400;
+                // nếu là lỗi validate dữ liệu thì thông báo cho người dùng biết
+                userMsg = exception.Message;
+            }
+            else
+            {
+                userMsg = "Có lỗi xảy ra vui lòng liên hệ MISA để được trợ giúp";
+                statusCode = 500;
+            }
+
+            var res = new
+            {
+                devMsg = exception.Message,
+                userMsg = userMsg
+            };
+            return StatusCode(statusCode, res);
+
+        }
+
     }
 }

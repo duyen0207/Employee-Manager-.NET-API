@@ -58,7 +58,7 @@ namespace MISA.Web05.Controllers
         /// <param name="departmentId"></param>
         /// <returns>phòng ban cụ thể</returns>
         [HttpGet("{departmentId}")]
-        public IActionResult? Get(Guid departmentId)
+        public IActionResult? Get(string departmentId)
         {
             try
             {

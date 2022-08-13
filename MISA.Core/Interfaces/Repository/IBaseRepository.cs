@@ -33,7 +33,7 @@ namespace MISA.Core.Interfaces.Repository
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        MISAEntity Get(Guid id);
+        MISAEntity Get(string id);
 
         /// <summary>
         /// Thêm mới một hàng

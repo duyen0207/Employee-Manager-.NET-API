@@ -21,7 +21,7 @@ namespace MISA.Infrastructure.Repository
         /// <summary>
         /// Kiểm tra nếu mã nhân viên đã tồn tại trong hệ thống
         /// </summary>
-        /// <param name="EmployeeCode"></param>
+        /// <param name="EmployeeCode">T</param>
         /// <returns></returns>
         public override bool CheckExistence(string EmployeeCode)
         {
@@ -32,21 +32,26 @@ namespace MISA.Infrastructure.Repository
                 parameter.Add("EmployeeCode", EmployeeCode);
                 var res = mySqlConnection.QueryFirstOrDefault(sql, param: parameter,
                     commandType: System.Data.CommandType.StoredProcedure);
-                return res;
+                // nếu không có
+                if (res == null) return false;
+                return true;
 
             }
         }
 
         /// <summary>
-        /// Lấy ra bản ghi mới nhất vừa được thêm vào
+        /// Lấy ra mã nhân viên lớn nhất trong database
         /// </summary>
         /// <returns></returns>
-        public Employee LatestEmployee()
+        public string LatestEmployeeCode()
         {
-            var sql = "SELECT e.CreatedDate, e.FullName FROM Employee e ORDER BY e.CreatedDate DESC;";
-            var res = mySqlConnection.QueryFirstOrDefault(sql);
-
-            return res;
+            using (mySqlConnection = new MySqlConnection(connectionString))
+            {
+                var sql = "SELECT e.EmployeeCode FROM Employee e ORDER BY e.EmployeeCode DESC;";
+                var res = mySqlConnection.QueryFirstOrDefault<string>(sql);
+                
+                return res;
+            }
         }
 
         #endregion

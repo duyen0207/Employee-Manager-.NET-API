@@ -10,7 +10,7 @@
         
         public Department()
         {
-            this.DepartmentId = Guid.NewGuid();
+            //this.DepartmentId = Guid.NewGuid();
         }
 
 

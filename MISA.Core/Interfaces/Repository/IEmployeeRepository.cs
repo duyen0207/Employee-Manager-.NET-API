@@ -20,10 +20,10 @@ namespace MISA.Core.Interfaces.Repository
         bool CheckExistence(string EmployeeCode);
 
         /// <summary>
-        /// Lấy ra nhân viên được thêm vào gần đây nhất
+        /// Lấy ra mã nhân viên lớn nhất trong database
         /// </summary>
         /// <returns></returns>
-        Employee LatestEmployee();
+        string LatestEmployeeCode();
         #endregion
     }
 }
