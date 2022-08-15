@@ -54,6 +54,63 @@ namespace MISA.Infrastructure.Repository
             }
         }
 
+        /// <summary>
+        /// Phân trang
+        /// </summary>
+        /// <param name="pageIndex">chỉ mục trang</param>
+        /// <param name="pageSize">số bản ghi trên một trang</param>
+        /// <param name="employeeFilter">từ khóa tìm kiếm</param>
+        /// <returns></returns>
+        public object Paging(string? employeeFilter, int pageSize, int pageIndex)
+        {
+            using (mySqlConnection = new MySqlConnection(connectionString))
+            {
+                var sql = "Proc_PagingEmployee";
+                var parameters = new DynamicParameters();
+                parameters.Add("employeeFilter", employeeFilter);
+                parameters.Add("pageIndex", pageIndex);
+                parameters.Add("pageSize", pageSize);
+                parameters.Add("totalRecords", direction: System.Data.ParameterDirection.Output);
+
+                var res = mySqlConnection.Query<Object>(sql: sql, param: parameters,
+                    commandType: System.Data.CommandType.StoredProcedure);
+                int totalRecords = parameters.Get<int>("totalRecords");
+
+                int totalPages = 0;
+                if (totalRecords - (totalRecords / pageSize) * pageSize == 0) totalPages = totalRecords / pageSize;
+                else totalPages = totalRecords / pageSize + 1;
+                return new
+                {
+                    TotalPages=totalPages,
+                    TotalRecords= totalRecords,
+                    Data=res
+                };
+            }
+        }
+
+        /// <summary>
+        /// tìm kiếm nhân viên
+        /// </summary>
+        /// <param name="employeeFilter"></param>
+        /// <returns></returns>
+        public IEnumerable<Object> SearchEmployee(string employeeFilter)
+        {
+            using (mySqlConnection = new MySqlConnection(connectionString))
+            {
+                if (string.IsNullOrEmpty(employeeFilter)) employeeFilter="";
+
+                var sql = "Proc_SearchEmployee";
+                var param = new DynamicParameters();
+                param.Add("searchPattern", employeeFilter);
+                var res = mySqlConnection.Query<Object>(sql: sql, param: param, 
+                    commandType: System.Data.CommandType.StoredProcedure);
+
+                return res;
+            }
+        }
+
+        
+
         #endregion
 
     }

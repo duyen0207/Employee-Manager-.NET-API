@@ -36,6 +36,20 @@ namespace MISA.Core.Services
         #region Methods
 
         /// <summary>
+        /// Phân trang danh sách nhân viên
+        /// </summary>
+        /// <param name="pageSize"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="employeeFilter"></param>
+        /// <returns></returns>
+        public Object Paging(string? employeeFilter, int pageSize, int pageIndex)
+        {
+            var res = _employeeRepository.Paging(employeeFilter, pageSize, pageIndex);
+            return res;
+        }
+
+
+        /// <summary>
         /// Tạo mã nhân viên mới
         /// </summary>
         /// Lưu ý: mã nhân viên phải có ít nhất 4 số

@@ -35,7 +35,6 @@ namespace MISA.Core.Services
             if (!this.CheckEmpty(department.DepartmentName, "Tên phòng ban"))
             {
                 // kiểm tra trùng lặp
-                Console.WriteLine("kiểm tra trùng lặp phòng ban: ", _repository.CheckExistence(department.DepartmentName));
                 return _repository.CheckExistence(department.DepartmentName);
 
             }

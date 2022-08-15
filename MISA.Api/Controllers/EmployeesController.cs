@@ -32,6 +32,29 @@ namespace MISA.Web05.Controllers
         }
         #endregion
 
+        #region Methods
+
+        /// <summary>
+        /// Phân trang
+        /// </summary>
+        /// <param name="employeeFilter">từ tìm kiếm</param>
+        /// <param name="pageSize">số bản ghi trên một trang</param>
+        /// <param name="pageNumber">số lượng trang</param>
+        /// <returns></returns>
+        [HttpGet("filter")]
+        public IActionResult Paging(string? employeeFilter, int pageSize, int pageNumber)
+        {
+            try
+            {
+                var res = _employeeService.Paging(employeeFilter, pageSize, pageNumber);
+                return Ok(res);
+            }
+            catch (Exception exception)
+            {
+                return this.HandleException(exception);
+            }
+
+        }
 
         /// <summary>
         /// Lấy danh sách nhân viên
@@ -177,5 +200,6 @@ namespace MISA.Web05.Controllers
 
         }
 
+        #endregion
     }
 }
