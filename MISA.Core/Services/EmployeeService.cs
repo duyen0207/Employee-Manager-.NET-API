@@ -42,7 +42,7 @@ namespace MISA.Core.Services
         /// <param name="pageNumber"></param>
         /// <param name="employeeFilter"></param>
         /// <returns></returns>
-        public Object Paging(string? employeeFilter, int pageSize, int pageIndex)
+        public Object Paging(string? employeeFilter, int pageSize=10, int pageIndex=1)
         {
             var res = _employeeRepository.Paging(employeeFilter, pageSize, pageIndex);
             return res;
@@ -88,14 +88,21 @@ namespace MISA.Core.Services
             /// MÃ NHÂN VIÊN-----------------------------------------
             if(!this.CheckEmpty(employee.EmployeeCode, "Mã nhân viên"))
             {
-                // kiểm tra trùng
-                if(!_employeeRepository.CheckExistence(employee.EmployeeCode))
-                {
-                    // kiểm tra hợp lệ (vd: mã phải chứa số và chữ...)
-                    if (!Regex.IsMatch(employee.EmployeeCode, @"^NV-[0-9]{4,}"))
-                        throw new MISAValidateException("Mã nhân viên không hợp lệ. Mã nhân viên phải có dạng NV-<chuỗi số ít nhất 4 ký tự>");
-
-                } else throw new MISAValidateException("Mã nhân viên đã tồn tại trong hệ thống.");
+                // nếu là thêm mới hoặc sửa employee code
+                if( employee.EmployeeId == Guid.Empty || 
+                    (employee.EmployeeId != Guid.Empty && 
+                     employee.EmployeeCode != _employeeRepository.Get(employee.EmployeeId.ToString()).EmployeeCode
+                    )
+                ) {
+                    // kiểm tra trùng
+                    if (!_employeeRepository.CheckExistence(employee.EmployeeCode))
+                    {
+                        // kiểm tra hợp lệ (vd: mã phải chứa số và chữ...)
+                        if (!Regex.IsMatch(employee.EmployeeCode, @"^NV-[0-9]{4,}"))
+                            throw new MISAValidateException("Mã nhân viên không hợp lệ. Mã nhân viên phải có dạng NV-<chuỗi số ít nhất 4 ký tự>");
+                    }
+                    else throw new MISAValidateException("Mã nhân viên đã tồn tại trong hệ thống.");
+                } 
             }
 
             /// TÊN NHÂN VIÊN----------------------------------------

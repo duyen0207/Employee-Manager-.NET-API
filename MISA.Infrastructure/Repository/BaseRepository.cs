@@ -139,6 +139,22 @@ namespace MISA.Infrastructure.Repository
 
         }
 
+        /// <summary>
+        /// Xóa hàng loạt
+        /// </summary>
+        /// <param name="IdList">danh sách id cần xóa</param>
+        /// <returns></returns>
+        public int DeleteMultiple(string IdList)
+        {
+            using (mySqlConnection = new MySqlConnection(connectionString))
+            {
+                var sql = $"DELETE FROM {TableName} WHERE {TableName}Id IN({IdList});";
+                var res = mySqlConnection.Execute(sql: sql, commandType: System.Data.CommandType.Text);
+                return res;
+
+            }
+        }
+
         #endregion
 
     }

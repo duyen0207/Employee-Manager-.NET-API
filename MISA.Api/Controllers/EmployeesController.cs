@@ -42,7 +42,7 @@ namespace MISA.Web05.Controllers
         /// <param name="pageNumber">số lượng trang</param>
         /// <returns></returns>
         [HttpGet("filter")]
-        public IActionResult Paging(string? employeeFilter, int pageSize, int pageNumber)
+        public IActionResult Paging(string? employeeFilter, int pageSize = 10, int pageNumber = 1)
         {
             try
             {
@@ -163,6 +163,28 @@ namespace MISA.Web05.Controllers
             {
                 return this.HandleException(exception);
             }   
+        }
+
+        /// <summary>
+        /// Xóa hàng loạt nhân viên theo danh sách id
+        /// </summary>
+        /// <param name="IdList">danh sách id của nhân viên</param>
+        /// <returns></returns>
+        [HttpDelete]
+        public IActionResult? DeleteMultiple(string[] IdList)
+        {
+            try
+            {
+                // chuyển danh sách thành chuỗi
+                string list = string.Join(",",IdList.Select(id => string.Format("'{0}'",id)));
+                // gọi phương thức xóa
+                var res = _employeeRepository.DeleteMultiple(list);
+                return Ok(res);
+            }
+            catch (Exception exception)
+            {
+                return this.HandleException(exception);
+            }
         }
 
         /// <summary>

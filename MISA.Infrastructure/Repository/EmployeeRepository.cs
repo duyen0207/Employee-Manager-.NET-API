@@ -65,6 +65,8 @@ namespace MISA.Infrastructure.Repository
         {
             using (mySqlConnection = new MySqlConnection(connectionString))
             {
+                if (string.IsNullOrEmpty(employeeFilter)) employeeFilter = "";
+
                 var sql = "Proc_PagingEmployee";
                 var parameters = new DynamicParameters();
                 parameters.Add("employeeFilter", employeeFilter);
@@ -76,13 +78,13 @@ namespace MISA.Infrastructure.Repository
                     commandType: System.Data.CommandType.StoredProcedure);
                 int totalRecords = parameters.Get<int>("totalRecords");
 
-                int totalPages = 0;
-                if (totalRecords - (totalRecords / pageSize) * pageSize == 0) totalPages = totalRecords / pageSize;
-                else totalPages = totalRecords / pageSize + 1;
+                int totalPages = (totalRecords - (totalRecords / pageSize) * pageSize == 0) ? 
+                    totalPages = totalRecords / pageSize: totalPages = totalRecords / pageSize + 1;
+
                 return new
                 {
-                    TotalPages=totalPages,
-                    TotalRecords= totalRecords,
+                    TotalPage=totalPages,
+                    TotalRecord= totalRecords,
                     Data=res
                 };
             }

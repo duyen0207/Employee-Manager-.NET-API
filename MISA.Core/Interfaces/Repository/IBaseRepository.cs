@@ -55,6 +55,13 @@ namespace MISA.Core.Interfaces.Repository
         /// <param name="id"></param>
         /// <returns></returns>
         int Delete(Guid id);
+
+        /// <summary>
+        /// Xóa hàng loạt
+        /// </summary>
+        /// <param name="IdList">danh sách id cần xóa</param>
+        /// <returns></returns>
+        int DeleteMultiple(string IdList);
         #endregion
     }
 }
