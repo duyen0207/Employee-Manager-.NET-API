@@ -21,6 +21,8 @@ namespace MISA.Core.Services
         /// _repository: dùng để truy cập database tầng infrastructure 
 
         protected IBaseRepository<MISAEntity> _repository;
+        protected List<string> ValidateErrorMsgs;
+        protected bool IsValid;
 
         #endregion
 
@@ -34,6 +36,8 @@ namespace MISA.Core.Services
         public BaseService(IBaseRepository<MISAEntity> repository)
         {
             _repository = repository;
+            ValidateErrorMsgs = new List<string>();
+            IsValid = true;
         }
 
         #endregion
@@ -57,10 +61,12 @@ namespace MISA.Core.Services
             }
             else
             {
+                
                 // thông báo dữ liệu không hợp lệ
-                return 0;
+                throw new MISAValidateException(String.Join(", ", ValidateErrorMsgs));
+
             }
-            
+
         }
 
         /// <summary>
@@ -81,7 +87,8 @@ namespace MISA.Core.Services
             else
             {
                 // thông báo dữ liệu không hợp lệ
-                return 0;
+                throw new MISAValidateException(ValidateErrorMsgs.ToString());
+                
             }
         }
 
@@ -96,6 +103,15 @@ namespace MISA.Core.Services
         }
 
         /// <summary>
+        /// Đặt tất cả các giá trị validate về mặc định
+        /// </summary>
+        protected void ResetValidate()
+        {
+            IsValid = true;
+            ValidateErrorMsgs.Clear();
+        }
+
+        /// <summary>
         /// Check nếu một thuộc tính nào đó trống
         /// </summary>
         /// <param name="entityProperty"></param>
@@ -103,7 +119,12 @@ namespace MISA.Core.Services
         public bool CheckEmpty(string entityProperty, string propName)
         {
             if (string.IsNullOrEmpty(entityProperty))
-                throw new MISAValidateException($"{propName} không được để trống");
+            {
+                IsValid=false;
+                ValidateErrorMsgs.Add($"{propName} không được để trống");
+                return true;
+
+            }
             else return false;
         }
 

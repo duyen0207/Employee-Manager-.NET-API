@@ -40,6 +40,14 @@ namespace MISA.Core.Interfaces.Repository
         /// </summary>
         /// <returns></returns>
         string LatestEmployeeCode();
+
+        /// <summary>
+        /// Nhập khẩu dữ liệu
+        /// </summary>
+        /// <param name="employees">danh sách nhân viên</param>
+        /// <returns>số bản ghi được lưu thành công</returns>
+        int Import(IEnumerable<Employee> employees);
+
         #endregion
     }
 }

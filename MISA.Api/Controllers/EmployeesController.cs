@@ -187,6 +187,23 @@ namespace MISA.Web05.Controllers
             }
         }
 
+        [HttpPost("import")]
+        public IActionResult? Import(IFormFile fileImport)
+        {
+            try
+            {
+                var employees = _employeeService.Import(fileImport);
+                return Ok(employees);
+
+            }
+            catch (Exception ex)
+            {
+
+                return HandleException(ex);
+            }
+        }
+
+
         /// <summary>
         /// Xử lý lỗi 
         /// </summary>
@@ -198,7 +215,7 @@ namespace MISA.Web05.Controllers
             //...
 
             // thông báo lỗi
-            string userMsg = null;
+            string userMsg = "";
             int statusCode = 200;
 
             if (exception is MISAValidateException)

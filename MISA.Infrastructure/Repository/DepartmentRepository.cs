@@ -34,6 +34,24 @@ namespace MISA.Infrastructure.Repository
             }
         }
 
+        /// <summary>
+        /// tìm id của department theo tên
+        /// </summary>
+        /// <param name="departmentName">tên phòng ban</param>
+        /// <returns>id của phòng ban</returns>
+        public object GetId(string departmentName)
+        {
+            if (string.IsNullOrEmpty(departmentName)) return null;
+            using (mySqlConnection = new MySqlConnection(connectionString))
+            {
+                var sql = $"SELECT DepartmentId FROM Department WHERE DepartmentName='{departmentName}'";
+                var res = mySqlConnection.QueryFirstOrDefault(sql);
+                
+                return res.DepartmentId;
+
+            }
+        }
+
         #endregion
     }
 }

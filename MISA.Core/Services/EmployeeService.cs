@@ -8,6 +8,8 @@ using MISA.Core.Interfaces.Services;
 using MISA.Core.Interfaces.Repository;
 using MISA.Core.Exceptions;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
 
 namespace MISA.Core.Services
 {
@@ -19,8 +21,8 @@ namespace MISA.Core.Services
         #region Properties
         // _employeeRepository: dùng để truy cập employee database
         // _departmentReposity: dùng để truy cập department database
-        IEmployeeRepository _employeeRepository;
-        IDepartmentRepository _departmentRepository;
+        readonly IEmployeeRepository _employeeRepository;
+        readonly IDepartmentRepository _departmentRepository;
 
         #endregion
 
@@ -99,9 +101,16 @@ namespace MISA.Core.Services
                     {
                         // kiểm tra hợp lệ (vd: mã phải chứa số và chữ...)
                         if (!Regex.IsMatch(employee.EmployeeCode, @"^NV-[0-9]{4,}"))
-                            throw new MISAValidateException("Mã nhân viên không hợp lệ. Mã nhân viên phải có dạng NV-<chuỗi số ít nhất 4 ký tự>");
+                        {
+                            IsValid = false;
+                            ValidateErrorMsgs.Add("Mã nhân viên không hợp lệ. Mã nhân viên phải có dạng NV-<chuỗi số ít nhất 4 ký tự>");
+                        }
                     }
-                    else throw new MISAValidateException("Mã nhân viên đã tồn tại trong hệ thống.");
+                    else
+                    {
+                        IsValid = false ;
+                        ValidateErrorMsgs.Add("Mã nhân viên đã tồn tại trong hệ thống.");
+                    }
                 } 
             }
 
@@ -114,7 +123,10 @@ namespace MISA.Core.Services
                 // kiểm tra phòng ban có tồn tại trong csdl hay không
                 var department = _departmentRepository.Get(employee.DepartmentId.ToString());
                 if (department == null)
-                    throw new MISAValidateException("Phòng ban không tồn tại.");
+                {
+                    IsValid = false;
+                    ValidateErrorMsgs.Add("Phòng ban không tồn tại.");
+                }
             }
             
             // NGÀY THÁNG----------------------------------------------
@@ -127,7 +139,7 @@ namespace MISA.Core.Services
             // EMAIL ---------------------------------------------------
             ValidateEmail(employee.Email);
 
-            return true;
+            return IsValid;
         }
 
         /// <summary>
@@ -135,12 +147,17 @@ namespace MISA.Core.Services
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        public static bool ValidateEmail(string email)
+        public bool ValidateEmail(string email)
         {
             if (!string.IsNullOrEmpty(email))
             {
                 if (!Regex.IsMatch(email, @"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$"))
-                    throw new MISAValidateException("Email không hợp lệ.");
+                {
+                    IsValid = false;
+                    ValidateErrorMsgs.Add("Email không hợp lệ.");
+                    return false;
+
+                }    
             }
             return true;
         }
@@ -150,7 +167,7 @@ namespace MISA.Core.Services
         /// </summary>
         /// <param name="dateTime"></param>
         /// <returns></returns>
-        public static bool ValidateDate(string dateTime, string dateName="Ngày")
+        public bool ValidateDate(string dateTime, string dateName="Ngày")
         {
             if(!string.IsNullOrEmpty(dateTime))
             {
@@ -160,16 +177,200 @@ namespace MISA.Core.Services
                 {
                     // check ngày không được vượt quá thời điểm hiện tại
                     if (DateTime.Compare(date, DateTime.Today) > 0)
-                        throw new MISAValidateException($"{dateName} không được lớn hơn thời điểm hiện tại");
+                    {
+                        IsValid = false;
+                        ValidateErrorMsgs.Add($"{dateName} không được lớn hơn thời điểm hiện tại");
+                        return false;
+                    }
 
                 }
-                else throw new MISAValidateException($"{dateName} không hợp lệ");
+                else
+                {
+                    IsValid=false;
+                    ValidateErrorMsgs.Add($"{dateName} không hợp lệ");
+                    return false;
+                }
 
             }
 
             return true;
         }
 
+        /// <summary>
+        /// Nhập khẩu dữ liệu
+        /// </summary>
+        /// <param name="importFile">tệp nhập khẩu</param>
+        /// <returns>danh sách nhân viên trong tệp nhập khẩu kèm trạng thái đã nhập khâu hay chưa
+        /// </returns>
+        /// Created by: LTBDUYEN (2022)
+        public Object Import(IFormFile importFile)
+        {
+            // validate tệp
+            if (importFile == null || importFile.Length <= 0)
+            {
+            }
+
+            if (!Path.GetExtension(importFile.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new MISAValidateException("Tệp không đúng định dạng.");
+            }
+
+            var employees = new List<Employee>();
+            int success = 0;
+
+            using (var stream = new MemoryStream())
+            {
+                importFile.CopyToAsync(stream);
+
+                // đọc tệp excel
+                using (var package = new ExcelPackage(stream))
+                {
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
+                    // tự động quét được vùng dữ liệu (vùng được bôi đen khung)
+                    var rowCount = worksheet.Dimension.Rows;
+
+                    // duyệt từng dòng một trong sheet (bắt đầu từ dòng thứ hai vì dòng một là tiêu đề)
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+
+                        var employeeCode = ConvertToString(worksheet.Cells[row, 2].Value);
+                        var fullName = ConvertToString(worksheet.Cells[row, 3].Value);
+                        var departmentName = ConvertToString(worksheet.Cells[row, 4].Value);
+
+                        var departmentId = ConvertToGuid(_departmentRepository.GetId(departmentName));
+
+                        var positionName = ConvertToString(worksheet.Cells[row, 5].Value);
+                        var gender = GetGenderCode(ConvertToString(worksheet.Cells[row, 6].Value));
+
+                        //var date = worksheet.Cells[row, 7].Value;
+                        var dateOfBirth = ConvertToDate(worksheet.Cells[row, 7].Value);
+                        var identityNumber = ConvertToString(worksheet.Cells[row, 8].Value);
+                        var identityDate = ConvertToDate(worksheet.Cells[row, 9].Value);
+                        var identityBy = ConvertToString(worksheet.Cells[row, 10].Value);
+                        
+                        var email = ConvertToString(worksheet.Cells[row, 11].Value);
+                        var phoneNumber = ConvertToString(worksheet.Cells[row, 12].Value);
+                        var telephoneNumber = ConvertToString(worksheet.Cells[row, 13].Value);
+                         
+                        var bankAccountNumber = ConvertToString(worksheet.Cells[row, 14].Value);
+                        var bankName = ConvertToString(worksheet.Cells[row, 15].Value);
+                        var bankBranchName = ConvertToString(worksheet.Cells[row, 16].Value);
+
+                        var employee = new Employee
+                        {
+                            EmployeeCode = employeeCode,
+                            DepartmentId = departmentId,
+                            FullName = fullName,
+                            DateOfBirth = dateOfBirth,
+                            Gender = gender,
+
+                            IdentityNumber = identityNumber,
+                            IdentityDate = identityDate,
+                            IdentityBy = identityBy,
+
+                            Email = email,
+                            PhoneNumber = phoneNumber,
+                            TelephoneNumber = telephoneNumber,
+
+                            BankAccountNumber = bankAccountNumber,
+                            BankBranchName = bankBranchName,
+                            BankName = bankName
+                        };
+
+                        // validate dữ liệu
+                        // xóa toàn bộ thông tin đã validate trước đó
+                        ResetValidate();
+
+                        var isValid = Validate(employee);
+                        
+                        if(!isValid)
+                        {
+                            employee.IsValidImport = false;
+                            if(ValidateErrorMsgs!=null) employee.ImportError.AddRange(ValidateErrorMsgs);
+                        } else
+                        {
+                            success++;
+                            // thêm mới vào db
+                            InsertService(employee);
+                        }
+                        employees.Add(employee);
+                    }
+                }
+                return new
+                {
+                    SuccessRecords= $"{success}/{employees.Count()} records",
+                    Details = employees.Select(e => new { e.EmployeeCode, e.FullName, e.IsValidImport, e.ImportError })
+                };
+                    
+            }
+        }
+
+        #region Import, Export Preprocessing
+
+        /// <summary>
+        /// Chuyển giới tính về dạng số để lưu trong database
+        /// </summary>
+        /// <param name="genderName">giới tính</param>
+        /// <returns>Nam: 0, Nữ: 1, Khác: 3</returns>
+        public int? GetGenderCode(string genderName)
+        {
+            if (string.IsNullOrEmpty(genderName)) return null;
+            else if (genderName == "Nam") return 0;
+            else if (genderName == "Nữ") return 1;
+            else return 3;
+        }
+        
+
+        /// <summary>
+        /// Chuyển giá trị sang chuỗi
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public string? ConvertToString(object? value)
+        {
+            if (value != null) return value.ToString();
+            return null;
+        }
+
+        /// <summary>
+        /// Chuyển sang kiểu dữ liệu DateTime
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public DateTime? ConvertToDate(object value)
+        {
+            double num;
+            if (value != null)
+            {
+                try
+                {
+                    num = Convert.ToDouble(value);
+                    return DateTime.FromOADate(num);
+
+                }
+                catch (Exception)
+                {
+
+                    return null;
+                }
+                
+            }
+            return null;
+        }
+        #endregion
+
+        public Guid ConvertToGuid(object value)
+        {
+            if (value == null) return Guid.Empty;
+            else
+            {
+                string val = value.ToString();
+                Guid result = new Guid();
+                if (Guid.TryParse(val, out result)) return result;
+                return Guid.Empty;
+            }
+           
+        }
         #endregion
 
     }

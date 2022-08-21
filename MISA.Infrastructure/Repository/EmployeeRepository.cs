@@ -40,6 +40,16 @@ namespace MISA.Infrastructure.Repository
         }
 
         /// <summary>
+        /// Nhập khẩu dữ liệu
+        /// </summary>
+        /// <param name="employees">danh sách nhân viên</param>
+        /// <returns>số bản ghi được lưu thành công</returns>
+        public int Import(IEnumerable<Employee> employees)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Lấy ra mã nhân viên lớn nhất trong database
         /// </summary>
         /// <returns></returns>

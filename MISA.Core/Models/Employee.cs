@@ -102,6 +102,18 @@ namespace MISA.Core.Models
         public string? BankBranchName { get; set; }
 
 
+        #region Import File
+        /// <summary>
+        /// xác định dữ liệu có được import từ file vào database hay không
+        /// </summary>
+        public bool? IsValidImport { get; set; } = true;
+
+        /// <summary>
+        /// Thông báo các lỗi khi import
+        /// </summary>
+        public List<string>? ImportError { get; set; } = new List<string>();
+        #endregion
+
         #endregion
     }
 }
